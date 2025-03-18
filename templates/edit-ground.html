@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editing Ground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="montserrat-font bgg-white min-h-screen flex">
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-4 rounded-lg">
+            <p class="text-lg">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Tool section -->
+    <div class="w-1/6 h-screen flex flex-col items-center justify-end gap-5">
+        <!-- Shape Tool -->
+        <div class="w-5/6 h-2/5 border-2 mt-2 flex flex-col items-start justify-center gap-8 pl-5">
+            <!-- Crop -->
+            <div class="flex justify-center items-center gap-3">
+                <button class="border-2 border-black rounded-md p-2 bg-gray-300 hover:bg-gray-500 transition-colors">
+                    <img src="/static/icons/crop_icon.svg" alt="Icon" class="w-8">
+                </button>
+                <button onclick="cropImage('1:1')" class="hover:underline"><p class="text-xl">1:1</p></button>
+                <button onclick="cropImage('4:3')" class="hover:underline"><p class="text-xl">4:3</p></button>
+                <button onclick="cropImage('16:9')" class="hover:underline"><p class="text-xl">16:9</p></button>
+                <button onclick="cropImage('9:16')" class="hover:underline"><p class="text-xl">9:16</p></button>
+            </div>
+
+            <!-- Flip -->
+            <div class="flex flex-col justify-center gap-5">
+                <button onclick="flipHorizontal()" class="border-2 border-black rounded-md p-2 bg-gray-300 hover:bg-gray-500 transition-colors">
+                    <img src="/static/icons/flip_horizontal_icon.svg" alt="Icon" class="w-8">
+                </button>
+                <button onclick="flipVertical()" class="border-2 border-black rounded-md p-2 bg-gray-300 hover:bg-gray-500 transition-colors rotate-[-90deg]">
+                    <img src="/static/icons/flip_horizontal_icon.svg" alt="Icon" class="w-8">
+                </button>
+            </div>
+
+            <!-- Rotate -->
+            <div class="w-full flex items-center gap-3">
+                <button onclick="rotate(90)" class="border-2 border-black rounded-md p-2 bg-gray-300 hover:bg-gray-500 transition-colors">
+                    <img src="/static/icons/rotate_right_icon.svg" alt="Icon" class="w-8">
+                </button>
+                <input 
+                    type="number" 
+                    id="rotateInput"
+                    class="w-1/3 h-full border border-gray-300 text-center 
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 
+                            focus:border-transparent 
+                            text-xl font-bold 
+                            appearance-none 
+                            bg-white 
+                            rounded-md 
+                            p-2"
+                    min="0"
+                    max="360"
+                    maxlength="3"
+                    pattern="[0-360]"
+                    onchange="rotate(this.value)"/>
+                <p class="font-sans">Degree</p>
+            </div>
+        </div>
+
+        <!-- Adjustment Tool -->
+        <div class="w-5/6 h-2/5 border-2 pl-1 flex flex-col justify-center">
+            <div class="space-y-6 w-64">
+                <!-- Slider 1 -->
+                <div>
+                    <div id="valueDisplay1" class="text-start mt-2 text-gray-700 font-semibold">Brightness: 0</div>
+                    <input
+                        type="range"
+                        id="slider1"
+                        min="-50"
+                        max="50"
+                        value="0"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600 focus:outline-none"
+                        oninput="updateValue('valueDisplay1', 'Brightness', this.value); adjustImage('brightness', parseInt(this.value))"
+                    />
+                </div>
+            
+                <!-- Slider 2 -->
+                <div>
+                    <div id="valueDisplay2" class="text-start mt-2 text-gray-700 font-semibold">Contrast: 0</div>
+                    <input
+                        type="range"
+                        id="slider2"
+                        min="-50"
+                        max="50"
+                        value="0"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600 focus:outline-none"
+                        oninput="updateValue('valueDisplay2', 'Contrast', this.value); adjustImage('contrast', parseInt(this.value))"
+                    />
+                </div>
+            
+                <!-- Slider 3 -->
+                <div>
+                    <div id="valueDisplay3" class="text-start mt-2 text-gray-700 font-semibold">Sharpen: 0</div>
+                    <input
+                        type="range"
+                        id="slider3"
+                        min="-50"
+                        max="50"
+                        value="0"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600 focus:outline-none"
+                        oninput="updateValue('valueDisplay3', 'Sharpen', this.value); adjustImage('sharpen', parseInt(this.value))"
+                    />
+                </div>
+            
+                <!-- Slider 4 -->
+                <div>
+                    <div id="valueDisplay4" class="text-start mt-2 text-gray-700 font-semibold">Noise: 0</div>
+                    <input
+                        type="range"
+                        id="slider4"
+                        min="-50"
+                        max="50"
+                        value="0"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600 focus:outline-none"
+                        oninput="updateValue('valueDisplay4', 'Noise', this.value); adjustImage('noise', parseInt(this.value))"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- Button -->
+        <div class="w-5/6 h-1/6 space-y-3">
+            <button onclick="autoEnhance()" class="w-full p-3 bg-green-300 hover:bg-green-500 transition-colors duration-200 rounded-lg">AUTO</button>
+            <div class="flex gap-3">
+                <button onclick="saveImage()" class="w-full p-3 bg-amber-300 hover:bg-amber-500 transition-colors duration-200 rounded-lg">SAVE</button>
+                <button onclick="handleCancel()" class="w-full p-3 bg-red-300 hover:bg-red-500 transition-colors duration-200 rounded-lg">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-l-4 border-yellow-500"></div>
+
+    <!-- Board -->
+    <div class="w-5/6">
+        <div class="w-full h-screen flex items-center justify-center relative">
+            <!-- Ảnh gốc (hidden) -->
+            <img id="sourceImage" src="/static/uploads/{{filename}}" style="display: none;">
+            
+            <!-- Canvas để chỉnh sửa -->
+            <canvas id="imageCanvas" class="max-w-full max-h-full"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('imageCanvas');
+        let ctx = canvas.getContext('2d');
+        let img = document.getElementById('sourceImage');
+        let currentRotation = 0;
+
+        // Khởi tạo ảnh
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+        }
+
+        function updateValue(displayId, name, value) {
+            document.getElementById(displayId).textContent = `${name}: ${value}`;
+        }
+
+        // Xử lý Crop
+        function cropImage(ratio) {
+            let newWidth, newHeight;
+            switch(ratio) {
+                case '1:1':
+                    newWidth = Math.min(canvas.width, canvas.height);
+                    newHeight = newWidth;
+                    break;
+                case '4:3':
+                    if (canvas.width / canvas.height > 4/3) {
+                        newHeight = canvas.height;
+                        newWidth = newHeight * 4/3;
+                    } else {
+                        newWidth = canvas.width;
+                        newHeight = newWidth * 3/4;
+                    }
+                    break;
+                case '16:9':
+                    if (canvas.width / canvas.height > 16/9) {
+                        newHeight = canvas.height;
+                        newWidth = newHeight * 16/9;
+                    } else {
+                        newWidth = canvas.width;
+                        newHeight = newWidth * 9/16;
+                    }
+                    break;
+                case '9:16':
+                    if (canvas.width / canvas.height > 9/16) {
+                        newHeight = canvas.height;
+                        newWidth = newHeight * 9/16;
+                    } else {
+                        newWidth = canvas.width;
+                        newHeight = newWidth * 16/9;
+                    }
+                    break;
+            }
+            
+            const x = (canvas.width - newWidth) / 2;
+            const y = (canvas.height - newHeight) / 2;
+            
+            const imageData = ctx.getImageData(x, y, newWidth, newHeight);
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Xử lý Flip
+        function flipHorizontal() {
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(canvas, -canvas.width, 0);
+            ctx.restore();
+        }
+
+        function flipVertical() {
+            ctx.save();
+            ctx.scale(1, -1);
+            ctx.drawImage(canvas, 0, -canvas.height);
+            ctx.restore();
+        }
+
+        // Xử lý Rotate
+        function rotate(degrees) {
+            currentRotation = degrees;
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvas.height;
+            tempCanvas.height = canvas.width;
+            
+            tempCtx.save();
+            tempCtx.translate(tempCanvas.width/2, tempCanvas.height/2);
+            tempCtx.rotate(degrees * Math.PI / 180);
+            tempCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
+            tempCtx.restore();
+            
+            canvas.width = tempCanvas.width;
+            canvas.height = tempCanvas.height;
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
+
+        // Xử lý các adjustment
+        function adjustImage(type, value) {
+            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                switch(type) {
+                    case 'brightness':
+                        data[i] = Math.min(255, Math.max(0, data[i] + value));
+                        data[i+1] = Math.min(255, Math.max(0, data[i+1] + value));
+                        data[i+2] = Math.min(255, Math.max(0, data[i+2] + value));
+                        break;
+                    case 'contrast':
+                        const factor = (259 * (value + 255)) / (255 * (259 - value));
+                        data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+                        data[i+1] = Math.min(255, Math.max(0, factor * (data[i+1] - 128) + 128));
+                        data[i+2] = Math.min(255, Math.max(0, factor * (data[i+2] - 128) + 128));
+                        break;
+                    case 'sharpen':
+                        // Simplified sharpening
+                        if (i > 0 && i < data.length - 4) {
+                            data[i] = Math.min(255, Math.max(0, data[i] + value * (data[i] - data[i-4])));
+                            data[i+1] = Math.min(255, Math.max(0, data[i+1] + value * (data[i+1] - data[i-3])));
+                            data[i+2] = Math.min(255, Math.max(0, data[i+2] + value * (data[i+2] - data[i-2])));
+                        }
+                        break;
+                    case 'noise':
+                        if (value > 0) {
+                            const noise = (Math.random() - 0.5) * value;
+                            data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                            data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
+                            data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
+                        }
+                        break;
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Auto enhance
+        function autoEnhance() {
+            // Reset all sliders
+            document.getElementById('slider1').value = 10;  // Slight brightness increase
+            document.getElementById('slider2').value = 15;  // Moderate contrast
+            document.getElementById('slider3').value = 5;   // Slight sharpening
+            document.getElementById('slider4').value = 0;   // No noise
+            
+            // Apply adjustments
+            adjustImage('brightness', 10);
+            adjustImage('contrast', 15);
+            adjustImage('sharpen', 5);
+        }
+
+        // Save Image
+        async function saveImage() {
+        if (!confirm('Are you sure you want to save changes?')) {
+            return;
+        }
+
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        
+        try {
+            const imageData = canvas.toDataURL('image/png');
+            const filename = '{{filename}}';
+            
+            const response = await fetch(`/save-image/${filename}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image_data: imageData })
+            });
+            
+            if (response.ok) {
+                window.location.href = '/enhance/';
+            } else {
+                throw new Error('Failed to save image');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error saving image: ' + error.message);
+        } finally {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+    }
+
+    // Handle Cancel
+    function handleCancel() {
+        if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+            window.location.href = '/enhance/';
+        }}
+
+    // Thêm hàm autoEnhance vào phần script
+    async function autoEnhance() {
+        try {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            const filename = '{{filename}}';
+            
+            const response = await fetch(`/auto-enhance/${filename}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Cập nhật canvas với ảnh đã enhance
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Reset all sliders
+                    document.getElementById('slider1').value = 0;
+                    document.getElementById('slider2').value = 0;
+                    document.getElementById('slider3').value = 0;
+                    document.getElementById('slider4').value = 0;
+                    
+                    // Update slider displays
+                    updateValue('valueDisplay1', 'Brightness', 0);
+                    updateValue('valueDisplay2', 'Contrast', 0);
+                    updateValue('valueDisplay3', 'Sharpen', 0);
+                    updateValue('valueDisplay4', 'Noise', 0);
+                };
+                img.src = result.image;
+            } else {
+                throw new Error(result.error || 'Auto enhance failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error during auto enhance: ' + error.message);
+        } finally {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+    }
+
+    </script>
+</body>
+</html>
