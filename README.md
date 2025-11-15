@@ -1,5 +1,6 @@
 # VIETNAM TOURIST DESTINATIONS WEB SEARCH
-
+> Link Report: https://docs.google.com/document/d/1pO1ru5hHni6oy0NqgqzRk45-m_iYPheL/edit?usp=sharing&ouid=111146929200183568698&rtpof=true&sd=true
+> Link Slide: https://www.canva.com/design/DAGZcJUqk9o/uqYfpWqKRVUIuMoUaqKvIQ/edit?utm_content=DAGZcJUqk9o&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 ## Các bước cài đặt để chạy web demo:
 ### B1: Cài đặt các gói thư viện Python cần thiết
 ```pip install -r requirement.txt```
